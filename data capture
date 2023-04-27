@@ -1,0 +1,105 @@
+#include <ArduinoBLE.h> // includes the Bluetooth module 
+#include <Arduino_LSM9DS1.h> // includes the Inertial measurement unit 
+
+
+// Create a BLE service for the IMU sensor
+BLEService imuService("BLU-403-connect_imu");
+
+// Create a BLE characteristic for the X-axis acceleration
+BLEFloatCharacteristic AX_Characteristic("BLU-403-connect-imu", BLERead | BLENotify);
+
+// Create a BLE characteristic for the Y-axis acceleration
+BLEFloatCharacteristic AY_Characteristic("BLU-403-connect-imu", BLERead | BLENotify);
+
+// Create a BLE characteristic for the Z-axis acceleration
+BLEFloatCharacteristic AZ_Characteristic("BLU-403-connect-imu", BLERead | BLENotify);
+
+// Create a BLE characteristic for the X-axis gyroscope
+BLEFloatCharacteristic GX_Characteristic("BLU-403-connect-imu", BLERead | BLENotify);
+
+// Create a BLE characteristic for the Y-axis gyroscope
+BLEFloatCharacteristic GY_Characteristic("BLU-403-connect-imu", BLERead | BLENotify);
+
+// Create a BLE characteristic for the Z-axis gyroscope
+BLEFloatCharacteristic GZ_Characteristic("BLU-403-connect-imu", BLERead | BLENotify);
+
+// A boolean flag to indicate whether a button has been pressed
+bool buttonPressed = false;
+
+void setup() {
+  // Start serial communication at 9600 baud
+  Serial.begin(9600);
+
+  // Wait for serial communication to be established
+  while (!Serial);
+
+  // Set pin 2 as an input with an internal pull-up resistor
+  pinMode(2, INPUT_PULLUP);
+
+  // Initialize the IMU sensor
+  if (!IMU.begin()) {
+    Serial.println("Failed to initialize IMU!");
+    while (1);
+  }
+
+  // Set up the BLE service and characteristics
+  BLE.begin(); // initialize BLE communication
+  BLE.setLocalName("403 IMU Sensor"); // set BLE device name
+  BLE.setAdvertisedService(imuService); // set advertised service to the IMU service
+  imuService.addCharacteristic(AX_Characteristic); // add the X-axis acceleration characteristic to the IMU service
+  imuService.addCharacteristic(AY_Characteristic); // add the Y-axis acceleration characteristic to the IMU service
+  imuService.addCharacteristic(AZ_Characteristic); // add the Z-axis acceleration characteristic to the IMU service
+  imuService.addCharacteristic(GX_Characteristic); // add the X-axis gyroscope characteristic to the IMU service
+  imuService.addCharacteristic(GY_Characteristic); // add the Y-axis gyroscope characteristic to the IMU service
+  imuService.addCharacteristic(GZ_Characteristic); // add the Z-axis gyroscope characteristic to the IMU service
+  BLE.addService(imuService); // add the IMU service to the BLE stack
+  AXCharacteristic.writeValue(0); // set the initial value of the X-axis acceleration characteristic to 0
+  AYCharacteristic.writeValue(0); // set the initial value of the Y-axis acceleration characteristic to 0
+  AZCharacteristic.writeValue(0); // set the initial value of the Z-axis acceleration characteristic to 0
+  GXCharacteristic.writeValue(0); // set the initial value of the X-axis gyroscope characteristic to 0
+  GYCharacteristic.writeValue(0); // set the initial value of the Y-axis gyroscope characteristic to 0
+  GZCharacteristic.writeValue(0); // set the initial value of the Z-axis gyroscope characteristic to 0
+  BLE.advertise(); // start advertising the BLE service
+
+  // Print the header for the data output
+  Serial.println("AX,AY,AZ,GX,GY,GZ");
+}
+void loop() {
+  float AX, AY, AZ, GX, GY, GZ;
+  // check if the button is pressed
+  if (digitalRead(2) == LOW) {
+    buttonPressed = true;
+    Serial.println("Data tracking started!");
+
+// loop until the button is released
+while (buttonPressed == true) {
+  // check if both new acceleration and gyroscope data is available
+  if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable()) {
+    // read the acceleration and gyroscope data
+    IMU.readAcceleration(AX, AY, AZ);
+    IMU.readGyroscope(GX, GY, GZ);
+
+    // print the acceleration and gyroscope data (csv format) to the serial monitor with three sig figs
+    Serial.print(AX, 3);
+    Serial.print(',');
+    Serial.print(AY, 3);
+    Serial.print(',');
+    Serial.print(AZ, 3);
+    Serial.print(',');
+    Serial.print(GX, 3);
+    Serial.print(',');
+    Serial.print(GY, 3);
+    Serial.print(',');
+    Serial.print(GZ, 3);
+    Serial.println();
+
+    // check if the button has been released
+    if (digitalRead(2) == HIGH) {
+      // reset the buttonPressed flag and print a message to indicate that data tracking has stopped
+      buttonPressed = false;
+      Serial.println("Data tracking stopped!");
+             }
+            }
+           }
+          }
+         }
