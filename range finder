@@ -1,0 +1,41 @@
+import RPi.GPIO as GPIO  # Import the GPIO library for general input and output pins of raspberry pi 
+import time             # Import the time library
+#power pin 2 on pi
+#ground pin 3 on pi
+GPIO.setmode(GPIO.BOARD)    # Set the GPIO pin numbering mode to Board mode
+ECHO_P = ("pin") #echo pin number on pi 
+Trigger_P = ("pin") #trigger pin number on pi 
+
+GPIO.setup(ECHO_P, GPIO.IN) # set the echo pin as input 
+GPIO.setup(Trigger_P, GPIO.OUT)   # Set the trigger pin as an output 
+
+
+GPIO.output(Trigger_P, GPIO.LOW)  # Set the trigger pin to constant low
+                                            
+              
+
+print ("Calculating distance from the dartboard") # Print a message to the console
+
+GPIO.output(Trigger_P, GPIO.HIGH)  # Send a signal to the trigger pin sensor 
+
+
+time.sleep(0.000015)         # sends signal for 15 microseconds before stopping
+
+
+GPIO.output(Trigger_P, GPIO.LOW)   # Stop the signal to the ultrasonic sensor
+
+#echo pin waiting to receieve ultra sound 
+while GPIO.input(ECHO_P) == 0:     # echo signal low
+  pulsetime_start = time.time()   # start recording time
+  
+#echo pin has recieved the signal 
+while GPIO.input(ECHO_P) == 1:     # Wait for the echo signal to go high 
+  pulsetime_end = time.time()     # Record the time the echo signal goes high 
+
+Time_for_signal_to_and_from = pulsetime_end - pulsetime_start # Calculate the duration of the pulse
+Time_for_signal_one_way = Time_for_signal_to_and_from/ 2 # divide time by two because it gets time two and from sensors and we only need time for one way
+distance_in_meters = Time_for_signal_one_way* 343.0   # Calculate the distance in meters using the time it took to travel one way and speed of sound 
+distance_in_feet = round(distance_in_meters * 3.281, 3)  # Convert the distance to feet and round it to 3 decimal places
+print ("You are:", distance_in_feet, "ft away from the dartboard")        # Print the distance in feet to the console
+
+
